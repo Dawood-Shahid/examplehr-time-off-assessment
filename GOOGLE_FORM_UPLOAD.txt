@@ -1,0 +1,27 @@
+# Google Form upload — final step
+
+You must complete this step manually (the agent cannot access the Google Form).
+
+## File to upload
+
+```
+/home/user/Projects/Take_Home_Assignment_Native_Solution/task-submission.zip
+```
+
+## Before uploading
+
+1. Confirm zip size is under 50 MB: `ls -lh ../task-submission.zip`
+2. Optionally send the email in `SUBMISSION_EMAIL.txt` to Larissa Oliveira (do not wait for a reply).
+
+## Form notes (paste in comments field if available)
+
+```
+Submitted per recruitment email (single .zip, no node_modules).
+Exercise deliverables included: TRD.md, tests + coverage/index.html, Storybook (npm run storybook).
+GitHub: https://github.com/Dawood-Shahid/examplehr-time-off-assessment
+TypeScript (Next.js) — compiles to JavaScript.
+```
+
+## Deadline
+
+Email received ~21 hours ago — submit within the remaining ~27 hours of the 48h window.
