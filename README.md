@@ -2,6 +2,8 @@
 
 Employee Hub — a Next.js 14 time-off management frontend with mock HCM integration, optimistic updates, and role-based admin navigation.
 
+**GitHub repository:** https://github.com/Dawood-Shahid/examplehr-time-off-assessment
+
 ## Stack
 
 - **Next.js 14** (App Router) + TypeScript
