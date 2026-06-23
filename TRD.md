@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| Document version | 1.0 |
-| Status | Baseline (reverse-engineered from implementation) |
+| Document version | 1.1 |
+| Status | Baseline + alternatives analysis |
 | Date | 2026-06-05 |
 | Owner | Frontend Platform |
 | Component | `task` (Next.js 14 App Router frontend + mock HCM backend) |
@@ -106,6 +106,74 @@ The application is a single Next.js 14 (App Router) deployment that contains **b
 - Single Node.js process (`next dev` / `next start`). Default port 3000.
 - HCM state is an **in-memory global singleton** (`globalThis`-attached maps) — it survives hot-reload within a process but is **not** durable across restarts and is **not** shared across instances. The system is therefore single-instance by design.
 - Storybook builds to a static bundle (`storybook-static/`) deployable independently (Vercel / Chromatic).
+
+### 2.4 Design decisions & alternatives considered
+
+This section records the main architectural forks evaluated for the assignment's core tensions: **fast UI vs HCM truth**, **optimistic employee submit vs pessimistic manager approve**, and **reconciling background HCM changes with in-flight user actions**.
+
+#### 2.4.1 Optimistic vs pessimistic mutation strategy
+
+| Approach | Pros | Cons | Decision |
+|----------|------|------|----------|
+| **Optimistic everywhere** | Uniform UX; instant feedback for employees and managers | Manager could show "approved" before HCM rejects; violates "never tell approved then denied" for approvals | Rejected for manager flow |
+| **Pessimistic everywhere** | Always server-authoritative | Employee submit feels slow; balance does not update until round-trip completes | Rejected for employee submit |
+| **Hybrid (chosen)** | Employee gets instant deduct + explicit uncertainty states; manager waits for HCM `PATCH` confirmation | Two mental models in one app; more state-machine surface area | **Selected** — matches persona needs in the PDF |
+
+**Implementation:** `useSubmitRequest` applies optimistic cache writes + Zustand mutation queue; `useManagerApproval` invalidates only after server success with no local balance mutation.
+
+#### 2.4.2 Server state: React Query vs alternatives
+
+| Approach | Pros | Cons | Decision |
+|----------|------|------|----------|
+| **TanStack React Query (chosen)** | Built-in cache, invalidation, polling, `dataUpdatedAt` for sync line | Learning curve for mutation + optimistic patterns | **Selected** |
+| **SWR** | Simpler API, good polling | Less structured mutation/rollback ergonomics for multi-key invalidation | Considered; rejected for mutation complexity |
+| **Redux Toolkit Query** | Centralized store | Heavier boilerplate for a focused module | Rejected — scope does not justify global slice |
+
+**Cache invalidation strategy:** On request settle, invalidate the affected single-cell key, batch balances, and employee request list (`useSubmitRequest.onSettled`). Background polling uses `refetchInterval` from `NEXT_PUBLIC_BALANCE_POLL_MS`. Batch reads use `staleTime: 30s`; on `429 rate_limited`, the client returns cached batch data rather than surfacing an error when prior data exists.
+
+#### 2.4.3 Client mutation state: Zustand vs alternatives
+
+| Approach | Pros | Cons | Decision |
+|----------|------|------|----------|
+| **Zustand (chosen)** | Minimal API; separate stores for optimistic mutations vs reconciliation holds | Not time-travel debuggable like Redux DevTools out of the box | **Selected** |
+| **React Query mutation state only** | Single source of truth | Hard to represent cross-poll reconciliation holds + silent-failure lifecycle across components | Rejected |
+| **React Context** | No extra dependency | Re-render churn; harder to test pure detectors separately | Rejected |
+
+#### 2.4.4 Reconciling background refresh with in-flight user action
+
+| Approach | Pros | Cons | Decision |
+|----------|------|------|----------|
+| **Overwrite with server value immediately** | Simple | Clobbers optimistic deduct mid-submit; confuses user | Rejected |
+| **Block all polls during mutation** | Stable display | Misses anniversary bonus detection window | Rejected |
+| **Hold + acknowledge (chosen)** | Preserves user intent; surfaces "Balance updated — tap to review"; after ack applies `max(0, incoming + delta)` | Extra UI and Zustand reconciliation store | **Selected** |
+
+**Detection:** `reconciliation-detector.ts` (version up + days changed, no pending mutation) and `conflict-detector.ts` (same signal during pending mutation → hold). **Silent failure:** separate path — `silent-failure-detector.ts` compares post-confirm poll version to `snapshotVersion`; transitions to `unconfirmed` with Retry/re-sync.
+
+#### 2.4.5 Component tree mapping to concerns
+
+```
+Pages (route shells)
+├── /dashboard          → EmployeeDashboard | ManagerDashboard
+├── /request-time-off   → RequestForm + ProjectedBalancePanel
+├── /my-requests        → MyRequestsView
+└── /approvals          → ManagerQueue (queue + ManagerControls + ApprovalHistory)
+
+Data / state hooks (concern layer)
+├── useBalancesBatch / useBalanceQuery     → HCM reads, polling, silent-failure check
+├── useSubmitRequest                       → optimistic deduct + rollback
+├── useManagerApproval                     → pessimistic PATCH
+├── useBalanceReconciliation               → out-of-band bonus detection
+└── useDisplayBalance                      → held vs acknowledged display value
+
+Pure logic (unit-tested)
+├── balance-state.ts, *-detector.ts        → display state + edge detection
+
+Presentation (Storybook-documented)
+├── LocationBalanceCard / StalenessBadge   → per-cell display + badges
+├── OptimisticFeedback                     → submit uncertainty feedback
+├── BalanceAtApprovalTime                  → frozen manager snapshot
+└── ManagerControls                        → test-hook triggers on /approvals
+```
 
 ---
 
@@ -440,7 +508,7 @@ The example file sets `NEXT_PUBLIC_BALANCE_POLL_MS=2000` and `HCM_BATCH_RATE_LIM
 | R-3 | In-memory, single-instance store. | No durability; no horizontal scale; data resets on restart. | By design for the mock; real HCM integration is the productionization path. |
 | R-4 | ~~Seed divergence from earlier TRD (`emp-1:LON`: 5 vs 22.5).~~ | Spec/impl mismatch. | **Resolved** — code and tests now seed `emp-1:LON=5` to match the spec. |
 | R-5 | Collision E2E asserts review-button disappearance, not exact final balance. | Slightly weaker guarantee on `original + bonus − requested`. | Tracked test-coverage gap. |
-| R-6 | Missing `OptimisticConfirmed` Storybook story with play assertion (per README). | Reduced visual coverage of confirmed state. | Tracked Storybook gap. |
+| R-6 | ~~Missing `OptimisticConfirmed` Storybook story with play assertion.~~ | Reduced visual coverage of confirmed state. | **Resolved** — `LocationBalanceCard/OptimisticConfirmed` story with play assertion added. |
 
 ---
 
@@ -452,7 +520,7 @@ The example file sets `NEXT_PUBLIC_BALANCE_POLL_MS=2000` and `HCM_BATCH_RATE_LIM
 |-------|---------|----------|
 | Unit | Vitest | Conflict, silent-failure, reconciliation detectors; nav items; balance state; HCM store; HCM trigger hooks (`useHcmTriggers`). |
 | Component | RTL (+ MSW where applicable) | Location balance card, request form, snapshot freeze, optimistic feedback, **manager controls** (`ManagerControls`, 6 tests). |
-| Storybook interaction | `@storybook/test` `play()` | Anniversary applied / during mutation, request form handlers / insufficient balance, approval in flight, **manager controls** (grant / year-reset / reset / error) — 9 total. |
+| Storybook interaction | `@storybook/test` `play()` | Anniversary applied / during mutation, optimistic confirmed, request form handlers / insufficient balance / silent-failure retry, approval in flight, **manager controls** (grant / year-reset / reset / error) — 11 total. |
 | E2E | Playwright | Core flows + silent-failure suite + **manager controls** (`manager-controls.spec.ts`: grant / year-reset / reset from portal, and a manager-grant → employee-dashboard cross-context check). |
 
 ### 11.2 E2E acceptance scenarios

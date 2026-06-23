@@ -10,7 +10,6 @@ import {
 } from '@/components/balance/LocationBalanceCard'
 import { formatRelativeTime } from '@/lib/balance-state'
 import { LEAVE_TYPE_LABELS, type BalanceCell } from '@/types/hcm'
-import { ManagerControls } from '../manager/ManagerControls'
 
 export function EmployeeDashboard() {
   const { data, isLoading, isPending, isError, dataUpdatedAt } =
@@ -92,8 +91,6 @@ export function ManagerDashboard() {
           </Link>
         </div>
       </div>
-
-      <ManagerControls />
 
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">

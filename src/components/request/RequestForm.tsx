@@ -90,7 +90,7 @@ export function RequestForm({
     setSubmissionError(undefined)
     submit.mutate(payload, {
       onError: (err) => {
-        const code = (err as HcmError)?.error
+        const code = (err as unknown as HcmError)?.error
         if (code) setSubmissionError(code)
       },
     })

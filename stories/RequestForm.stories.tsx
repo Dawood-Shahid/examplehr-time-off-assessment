@@ -44,7 +44,21 @@ export const HcmRejectedInvalidDimension: Story = {
 }
 
 export const SilentFailureDetected: Story = {
-  render: () => <OptimisticFeedback isUnconfirmed />,
+  render: () => (
+    <OptimisticFeedback
+      isUnconfirmed
+      onRetry={() => undefined}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(
+      canvas.getByText(/unconfirmed.*re-verifying with hcm/i)
+    ).toBeInTheDocument()
+    await expect(
+      canvas.getByRole('button', { name: /retry \/ re-sync/i })
+    ).toBeInTheDocument()
+  },
 }
 
 export const NetworkTimeout: Story = {

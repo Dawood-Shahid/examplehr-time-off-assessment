@@ -24,8 +24,8 @@ test.describe('Manager HCM Admin Controls', () => {
   })
 
   test('grants an anniversary bonus from the portal', async ({ page }) => {
-    await page.getByLabel('Employee').selectOption('emp-1')
-    await page.getByLabel('Location').selectOption('NYC')
+    await page.getByLabel('Employee', { exact: true }).selectOption('emp-1')
+    await page.getByLabel('Location', { exact: true }).selectOption('NYC')
     await page.getByRole('button', { name: /grant bonus/i }).click()
 
     await expect(page.getByText(/\+5 days granted/i)).toBeVisible({ timeout: 15000 })
@@ -73,8 +73,8 @@ test.describe('Manager-triggered bonus reaches the employee', () => {
     await expect(employeePage.getByText('New York')).toBeVisible({ timeout: 15000 })
 
     // Manager grants a bonus to emp-1 / NYC through the portal UI.
-    await managerPage.getByLabel('Employee').selectOption('emp-1')
-    await managerPage.getByLabel('Location').selectOption('NYC')
+    await managerPage.getByLabel('Employee', { exact: true }).selectOption('emp-1')
+    await managerPage.getByLabel('Location', { exact: true }).selectOption('NYC')
     await managerPage.getByRole('button', { name: /grant bonus/i }).click()
     await expect(managerPage.getByText(/\+5 days granted/i)).toBeVisible({
       timeout: 15000,

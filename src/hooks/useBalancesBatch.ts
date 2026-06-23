@@ -15,7 +15,7 @@ export function useBalancesBatch(enabled = true) {
       try {
         return await hcmClient.getBalances()
       } catch (err) {
-        const error = err as HcmError
+        const error = err as unknown as HcmError
         if (error.error === 'rate_limited') {
           const cached = queryClient.getQueryData<BalancesResponse>(
             queryKeys.balances('batch')
@@ -31,7 +31,7 @@ export function useBalancesBatch(enabled = true) {
     gcTime: 300_000,
     enabled,
     retry: (failureCount, error) => {
-      const hcmError = error as HcmError
+      const hcmError = error as unknown as HcmError
       if (hcmError?.error === 'rate_limited') return false
       return failureCount < 2
     },

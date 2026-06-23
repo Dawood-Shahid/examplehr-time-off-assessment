@@ -72,6 +72,31 @@ export const OptimisticRolledBack: Story = {
   args: { balance: baseBalance },
 }
 
+export const OptimisticConfirmed: Story = {
+  render: function ConfirmedStory() {
+    useOptimisticStore.getState().addMutation({
+      id: 'mut-confirmed',
+      employeeId: 'emp-1',
+      locationId: 'NYC',
+      delta: -3,
+      status: 'confirmed',
+      submittedAt: Date.now(),
+      snapshotVersion: 1,
+      serverRequestId: 'req-123',
+    })
+    return (
+      <LocationBalanceCard
+        balance={{ ...baseBalance, daysAvailable: 9 }}
+      />
+    )
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(canvas.getByText('9.0')).toBeInTheDocument()
+    await expect(canvas.getByText('Pending approval')).toBeInTheDocument()
+  },
+}
+
 export const AnniversaryBonusApplied: Story = {
   render: function AnniversaryStory() {
     useReconciliationStore.getState().setEntry({

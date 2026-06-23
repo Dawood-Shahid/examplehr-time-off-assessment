@@ -1,8 +1,9 @@
 'use client'
 
 import { usePendingRequests } from '@/hooks/useRequests'
-import { PendingRequestRow } from './PendingRequestRow'
 import { ApprovalHistory } from './ApprovalHistory'
+import { ManagerControls } from './ManagerControls'
+import { PendingRequestRow } from './PendingRequestRow'
 
 export function ManagerQueue() {
   const { data: requests = [], isLoading } = usePendingRequests()
@@ -65,6 +66,8 @@ export function ManagerQueue() {
           Showing {requests.length} of {requests.length} pending requests
         </div>
       </div>
+
+      <ManagerControls />
 
       <ApprovalHistory />
     </div>

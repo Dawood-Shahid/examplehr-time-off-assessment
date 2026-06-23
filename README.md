@@ -62,7 +62,7 @@ Run these from the repo root after `npm install` and copying `.env.local`:
 | 1 | `npm test` | 34 Vitest tests (unit + component) |
 | 2 | `npm run test:coverage` | Same tests + HTML report at `coverage/index.html` |
 | 3 | `npm run test:e2e` | 12 core + 1 silent-failure Playwright tests; auto-starts app on **:3005** / **:3006** |
-| 4 | `npm run test:storybook` | Builds Storybook, runs 34 story tests (9 `play()` interactions) |
+| 4 | `npm run test:storybook` | Builds Storybook, runs 44 story tests (11 `play()` interactions) |
 | 5 | `npm run lint` | ESLint |
 
 Manual smoke: `npm run dev` → log in as `alice@example.com` / `password` → dashboard balance cards load.
@@ -101,7 +101,7 @@ Managers are redirected away from `/request-time-off` and `/my-requests`. Employ
 | `npm run lint` | Next.js ESLint |
 | `npm run storybook` | Storybook dev server (port 6006) |
 | `npm run build-storybook` | Static Storybook build → `storybook-static/` |
-| `npm run test:storybook` | Build static Storybook, serve on :6006, run all story smoke + `play()` tests (34 stories, 9 interaction tests) |
+| `npm run test:storybook` | Build static Storybook, serve on :6006, run all story smoke + `play()` tests (44 stories, 11 interaction tests) |
 | `npm run test:storybook:live` | Run `play()` tests against an already-running Storybook on port 6006 |
 
 ## Storybook Deployment
@@ -217,9 +217,9 @@ The in-memory HCM store simulates real external-system behavior:
 
 ## Storybook
 
-**34 stories** across 5 files. **9** stories have `play()` interaction tests (2 anniversary, 2 request form, 1 manager approval, 4 manager controls).
+**44 stories** across 5 files. **11** stories have `play()` interaction tests (2 anniversary, 1 optimistic confirmed, 3 request form, 1 manager approval, 4 manager controls).
 
-### `Balance/LocationBalanceCard` (11 stories)
+### `Balance/LocationBalanceCard` (12 stories)
 
 | Story | State |
 |-------|-------|
@@ -229,23 +229,22 @@ The in-memory HCM store simulates real external-system behavior:
 | `Refreshing` | Background fetch |
 | `OptimisticPending` | Deducted + submitting |
 | `OptimisticRolledBack` | Restored after rejection |
+| `OptimisticConfirmed` | Server accepted; pending approval badge (**play test**) |
 | `AnniversaryBonusApplied` | Bonus arrived, review flow (**play test**) |
 | `AnniversaryBonusDuringMutation` | Bonus during in-flight mutation (**play test**) |
 | `ConflictWithPendingMutation` | Reconciliation flag set |
 | `HcmUnavailable` | Error / timeout state |
 | `AnniversaryBonusLiveRefetch` | MSW-driven refetch |
 
-**Missing vs TRD:** `OptimisticConfirmed` story with play assertion.
+### `Balance/StalenessBadge` (12 stories)
 
-### `Balance/StalenessBadge` (3 stories)
-
-`Fresh`, `Stale`, `BalanceDisplayDefault`
+`Fresh`, `Stale`, `Refreshing`, `OptimisticPending`, `OptimisticConfirmed`, `OptimisticRolledBack`, `Unconfirmed`, `ReconciliationPending`, `BalanceRefreshed`, `HcmUnavailable`, `AllStates`, `BalanceDisplayDefault`
 
 ### `Request/RequestForm` (9 stories)
 
-`Default`, `Submitting`, `SubmittedPendingApproval`, `HcmRejectedInsufficientBalance`, `HcmRejectedInvalidDimension`, `SilentFailureDetected`, `NetworkTimeout`, `FormWithHandlers` (**play test**), `FormInsufficientBalance` (**play test**)
+`Default`, `Submitting`, `SubmittedPendingApproval`, `HcmRejectedInsufficientBalance`, `HcmRejectedInvalidDimension`, `SilentFailureDetected` (**play test** — Retry button), `NetworkTimeout`, `FormWithHandlers` (**play test**), `FormInsufficientBalance` (**play test**)
 
-Stories `Submitting` through `NetworkTimeout` render `OptimisticFeedback` states without `play()` functions.
+Stories `Submitting`, `SubmittedPendingApproval`, `HcmRejectedInsufficientBalance`, `HcmRejectedInvalidDimension`, and `NetworkTimeout` render `OptimisticFeedback` states without `play()` functions.
 
 ### `Manager/ManagerQueue` (6 stories)
 
@@ -343,7 +342,7 @@ During an in-flight mutation, the reconciliation guard holds the bonus update an
 |-------|-------|-------|
 | **Unit (Vitest)** | 24 | conflict/silent-failure/reconciliation detectors, nav items, balance state, HCM store, `useHcmTriggers` |
 | **Component (RTL + MSW)** | 10 | location balance card, request form, snapshot freeze, optimistic feedback, `ManagerControls` |
-| **Storybook** | 34 stories / 9 `play()` | anniversary, request form, manager approval, manager controls |
+| **Storybook** | 44 stories / 11 `play()` | anniversary, optimistic confirmed, request form, manager approval, manager controls |
 | **E2E (Playwright)** | 13 | 8 time-off flows + 4 manager controls + 1 silent-failure |
 
 **Code coverage proof:** run `npm run test:coverage`, then open `coverage/index.html` in a browser (included in the submission zip).
