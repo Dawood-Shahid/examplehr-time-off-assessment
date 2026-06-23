@@ -6,21 +6,65 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test -c playwright.config.ts && playwright test -c playwright.silent-failure.config.ts",
+    "test:e2e:silent": "playwright test -c playwright.silent-failure.config.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "cross-env STORYBOOK_DISABLE_TELEMETRY=1 storybook build",
+    "test:storybook": "npm run build-storybook && concurrently -k -s first -n SERVE,TEST -c magenta,blue \"http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && test-storybook --url http://127.0.0.1:6006\"",
+    "test:storybook:live": "test-storybook --url http://127.0.0.1:6006"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "@tanstack/react-query-devtools": "^5.101.0",
+    "ajv": "^8.20.0",
+    "lucide-react": "^1.17.0",
+    "msw": "^2.14.6",
+    "msw-storybook-addon": "^2.0.7",
+    "next": "14.2.35",
+    "next-auth": "^4.24.14",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.35"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@playwright/test": "^1.60.0",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/addon-interactions": "^8.6.14",
+    "@storybook/blocks": "^8.6.14",
+    "@storybook/builder-vite": "^8.6.18",
+    "@storybook/react": "^8.6.18",
+    "@storybook/react-vite": "^8.6.18",
+    "@storybook/test": "^8.6.18",
+    "@storybook/test-runner": "^0.19.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "concurrently": "^10.0.3",
+    "cross-env": "^7.0.3",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35"
+    "eslint-config-next": "14.2.35",
+    "http-server": "^14.1.1",
+    "jsdom": "^29.1.1",
+    "postcss": "^8",
+    "storybook": "^8.6.18",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5",
+    "vite": "^5.4.21",
+    "vitest": "^1.6.0",
+    "wait-on": "^9.0.10"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

@@ -1,0 +1,19 @@
+To: Larissa Oliveira (Wizdaa recruitment)
+Subject: Take-home assessment submission — format confirmation
+
+Hi Larissa,
+
+Thank you for the assessment invitation. I have completed the exercise and am submitting today via the Google Form as instructed.
+
+The exercise spec also listed a TRD, GitHub repository, test coverage proof, and Storybook. I have included all of these:
+
+- Zip upload: complete source code + README (no node_modules)
+- GitHub: https://github.com/Dawood-Shahid/examplehr-time-off-assessment
+- TRD: TRD.md in the project root
+- Tests + coverage: npm run test:coverage (report at coverage/index.html, included in zip)
+- Storybook: npm run storybook (single command, port 6006)
+
+The solution is implemented in TypeScript (Next.js), which compiles to JavaScript. Please let me know if you need any adjustments to the submission format.
+
+Best regards,
+Dawood
